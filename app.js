@@ -48,6 +48,14 @@ app.use(cookieSession({
 //设置路由
 //1.首页路由(请求的路径是/  或者/index的时候都可以，直接请求过去)
 app.use(/\/(index)?/, require('./router/index'));
+// 后台 - 文章管理
+app.use('/admin/article', require('./routes/admin/article'))
+    // 后台 - 类目管理
+app.use('/admin/category', require('./routes/admin/category'))
+    // 后台 - 查看日志
+app.use('/admin/log', require('./routes/admin/log'))
+    // 后台 - 账户管理
+app.use('/admin/account', require('./routes/admin/account'))
 
 
 
