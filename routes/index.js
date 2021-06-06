@@ -1,9 +1,17 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express')
+const app = express()
+const article = require('../middleware/article')
+const category = require('../middleware/category')
+const auth = require('../middleware/auth')
 
-//请求首页渲染
-router.get('/', (req, res) => {
-    res.render('index.html');
-});
+app.get('/', [
+    article.getHot, 
+    article.getArticles, 
+    category.getCategories,
+    auth.getUser
+  ], (req, res) => {
+    const { hots, articles, categories, user } = req
+    res.render('index.html', { hots, articles, categories, user })
+})
 
-module.exports = router;
+module.exports = app
