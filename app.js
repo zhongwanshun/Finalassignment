@@ -52,7 +52,7 @@ app.use(/\/(index)?/, require('./router/index'));
 app.use('/admin/article', require('./routes/admin/article'))
     // 后台 - 类目管理
 app.use('/admin/category', require('./routes/admin/category'))
-    // 后台 - 查看日志
+    // 后台 - 查看历史操作
 app.use('/admin/log', require('./routes/admin/log'))
     // 后台 - 账户管理
 app.use('/admin/account', require('./routes/admin/account'))
