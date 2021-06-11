@@ -75,4 +75,4 @@ app.use('/admin/log', require('./routes/admin/log'))
 app.use('/admin/account', require('./routes/admin/account'))
     // 
 
-app.listen(3000, () => { console.log('runing.....3000') })
+app.listen(3000, () => { console.log('runing...') })
