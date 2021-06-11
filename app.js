@@ -1,89 +1,78 @@
-var createError = require('http-errors');
-var express = require('express');
-//创建app对象，不然后面用不了
-var app = express();
+// 入口文件
+const express = require('express')
+const app = express()
+const cookieSession = require('cookie-session')
+const multer = require('multer')
+const path = require('path')
+const fs = require('fs')
+const ejs = require('ejs');
+// 设置上传的目录文件夹
+const upload = multer({
+        dest: './public/upload',
+        limits: { fileSize: 1024 * 1024 * 2 } // 单个文件大小限制
+    })
+    // 模板引擎
+app.set('view engine', 'html')
+app.engine('html', ejs.__express);
+app.set('views', `${__dirname}/views`) // 用ejs模板渲染html
 
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var cookieSession = require('cookie-session')
-var logger = require('morgan');
-var path = require('path');
-var ejs = require('ejs');
-// 引入文件上传的模板
-var multer = require('multer');
-
-//对文件上传进行配置(设置一个上传的目录文件夹)
-var upload = multer({
-    dest: './public/upload',
-    limits: { fileSize: 1024 * 1024 * 2 } // 单个文件大小限制
-})
-
-
-//静态资源设置
-app.use('/www', express.static('public'));
-
-// 设置模板类型
-app.set('html', path.join(__dirname, 'views'));
-app.engine('.html', ejs.__express);
-app.set('view engine', 'html');
-
-app.use(logger('dev'));
-app.use(express.json());
-// 处理post 请求参数
-//extended: false：表示使用系统模块querystring来处理，也是官方推荐的
-// extended: true：表示使用第三方模块qs来处理
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
-
-// 使用session
-// sesion是服务端存储数据，session也是一个对象。
-// 对session 的操作，就是基本的对象操作。读value 添加 key：value
+// 静态资源公开
+app.use(express.static('public'))
+    // 处理post请求参数
+    //extended: false：表示使用系统模块querystring来处理，也是官方推荐的
+    // extended: true：表示使用第三方模块qs来处理
+app.use(express.urlencoded({ extended: true }))
+    // 使用session
 app.use(cookieSession({
-    name: 'zws',
-    keys: ['zwsxyj'], //字符串数组
-    maxAge: 1024 * 60 * 60
-}))
+    keys: ['zws'], // 密钥
+    maxAge: 1000 * 60 * 60 //有效期
+}));
+//前端页面实现
+// 首页
+app.use(/\/(index)?/, require('./routes/index')); // / 或 /index
+// 文章
+app.use('/article', require('./routes/article'));
+// 搜索
+app.use('/search', require('./routes/search'));
+// 登录
+app.use('/user', require('./routes/user'));
+//注册
+app.use('/register', require('./routes/register'));
 
-//设置路由
-//1.首页路由(请求的路径是/  或者/index的时候都可以，直接请求过去)
-app.use(/\/(index)?/, require('./router/index'));
-// 后台 - 文章管理
+// 后台并且权限验证（给他增加一个方法）放在中间件中
+app.use('/admin/?*', require('./middleware/auth').allowToAdmin);
+
+// session延时
+app.use((req, res, next) => {
+    //取下整将获取的时间取下整赋值给左边的属性
+    req.session.nowInMinutes = Math.floor(Date.now() / 60e3) // 每分钟更新一次
+        //执行下一个中间件
+    next()
+});
+// 后台 - 上传文件(对每次上传单个文件配置)
+// single 上传单个文件;upload为前端上传图像的input标签的name值
+app.post('/admin/?*', upload.single('upload'), (req, res, next) => {
+    // 上传成功的文件对象
+    const { file } = req;
+    if (file) {
+        let extname = path.extname(file.originalname) // 文件后缀名
+        fs.renameSync(file.path, file.path + extname) // 上传后的文件路径
+            //上传的文件路径和文件名称以及文件后缀
+        req.uploadUrl = '/upload/' + file.filename + extname
+    };
+    next()
+});
+
+// 后台 - 首页
+app.use('/admin', require('./routes/admin'))
+    // 后台 - 文章管理
 app.use('/admin/article', require('./routes/admin/article'))
     // 后台 - 类目管理
 app.use('/admin/category', require('./routes/admin/category'))
-    // 后台 - 查看历史操作
+    // 后台 - 查看日志
 app.use('/admin/log', require('./routes/admin/log'))
     // 后台 - 账户管理
 app.use('/admin/account', require('./routes/admin/account'))
+    // 
 
-
-
-
-var indexRouter = require('./routes/index');
-
-
-
-
-
-
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
-
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-    next(createError(404));
-});
-
-// error handler
-app.use(function(err, req, res, next) {
-    // set locals, only providing error in development
-    res.locals.message = err.message;
-    res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-    // render the error page
-    res.status(err.status || 500);
-    res.render('error');
-});
-
-module.exports = app;
+app.listen(3000, () => { console.log('runing.....3000') })
