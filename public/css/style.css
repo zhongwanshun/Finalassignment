@@ -1,2 +1,7 @@
-.card-columns {column-count: 4;}
-#content img {max-width: 100%;}
+.card-columns {
+    column-count: 4;
+}
+
+#content img {
+    max-width: 100%;
+}
